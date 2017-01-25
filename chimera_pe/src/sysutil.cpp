@@ -8,13 +8,13 @@ typedef BOOL(WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
 
 bool is_compiled_32b()
 {
-    if (sizeof(LPVOID) == sizeof(DWORD)) {
-        return true;
-    }
+#if defined(_WIN64)
     return false;
+#endif
+    return true;
 }
 
-bool is_wow64()
+bool is_wow64(HANDLE process = NULL)
 {
     LPFN_ISWOW64PROCESS fnIsWow64Process;
     BOOL bIsWow64 = false;
@@ -27,7 +27,10 @@ bool is_wow64()
     if (fnIsWow64Process == NULL) {
         return false;
     }
-    if (!fnIsWow64Process(GetCurrentProcess(), &bIsWow64)) {
+    if (process == NULL) {
+        process = GetCurrentProcess();
+    }
+    if (!fnIsWow64Process(process, &bIsWow64)) {
         return false;
 	}
     if (bIsWow64 == TRUE) {

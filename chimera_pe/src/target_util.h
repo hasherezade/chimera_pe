@@ -16,7 +16,7 @@ bool get_default_browser(LPWSTR lpwOutPath, DWORD szOutPath)
         printf("[ERROR] Failed with value = %x\n", res);
         return false;
     }
-    printf("%S\n", lpwOutPath );
+    printf("%S\n", lpwOutPath);
     return true;
 }
 
