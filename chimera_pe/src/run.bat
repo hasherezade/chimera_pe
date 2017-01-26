@@ -1,1 +1,1 @@
-demo.bin
+demo32.bin

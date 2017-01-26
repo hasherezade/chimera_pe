@@ -4,10 +4,29 @@ project (ChimeraPE)
 add_definitions(-DUNICODE -D_UNICODE)
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 
+set (peloader_srcs
+	peloader/pe_hdrs_helper.cpp
+	peloader/pe_raw_to_virtual.cpp
+	peloader/load_imports.cpp
+	peloader/relocate.cpp
+	peloader/inject_pe.cpp
+)
+
+
 set (srcs
     main.cpp
-	pe_hdrs_helper.cpp
 	sysutil.cpp
+	target_util.cpp
+	process_util.cpp
+	${peloader_srcs}
+)
+
+set (peloader_hdrs
+	peloader/pe_hdrs_helper.h
+	peloader/pe_raw_to_virtual.h
+	peloader/load_imports.h
+	peloader/relocate.h
+	peloader/inject_pe.h
 )
 
 set (hdrs
@@ -15,18 +34,16 @@ set (hdrs
 	ntddk.h
 	ntdll_undoc.h
 	target_util.h
-	enumproc.h
-	createproc.h
-	pe_hdrs_helper.h
-	pe_raw_to_virtual.h
-	load_imports.h
-	relocate.h
-	inject_pe.h
+	process_util.h
 	sysutil.h
+	${peloader_hdrs}
 )
 
 set (rsrc
     resource.rc
 )
+
+SOURCE_GROUP("Source Files\\peloader" FILES ${peloader_srcs} )
+SOURCE_GROUP("Header Files\\peloader" FILES ${peloader_hdrs} )
 
 add_executable (ChimeraPE ${rsrc} ${hdrs} ${srcs})

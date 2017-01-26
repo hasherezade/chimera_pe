@@ -1,10 +1,4 @@
-#pragma once
-
-#include <windows.h>
-#include <stdio.h>
-
-#include "pe_hdrs_helper.h"
-#include "sysutil.h"
+#include "pe_raw_to_virtual.h"
 
 // Map raw PE into virtual memory of local process:
 bool sections_raw_to_virtual(BYTE* payload, SIZE_T destBufferSize, OUT BYTE* destAddress)
@@ -55,16 +49,16 @@ bool sections_raw_to_virtual(BYTE* payload, SIZE_T destBufferSize, OUT BYTE* des
         raw_end = next_sec->SizeOfRawData + next_sec->PointerToRawData;
         
         if (next_sec->VirtualAddress + sec_size > destBufferSize) {
-            printf("[!] Virtual section size is out ouf bounds: %lx\n", sec_size);
+            printf("[!] Virtual section size is out ouf bounds: %lx\n", static_cast<long>(sec_size));
             sec_size = SIZE_T(destBufferSize - next_sec->VirtualAddress);
-            printf("[!] Truncated to maximal size: %lx\n", sec_size);
+            printf("[!] Truncated to maximal size: %lx\n", static_cast<long>(sec_size));
         }
         if (next_sec->VirtualAddress >= destBufferSize && sec_size != 0) {
-            printf("[-] VirtualAddress of section is out ouf bounds: %lx\n", static_cast<SIZE_T>(next_sec->VirtualAddress));
+            printf("[-] VirtualAddress of section is out ouf bounds: %lx\n", static_cast<long>(next_sec->VirtualAddress));
             return false;
         }
         if (next_sec->PointerToRawData + sec_size > destBufferSize) {
-            printf("[-] Raw section size is out ouf bounds: %lx\n", sec_size);
+            printf("[-] Raw section size is out ouf bounds: %lx\n", static_cast<long>(sec_size));
             return false;
         }
         printf("[+] %s to: %p\n", next_sec->Name, section_raw_ptr);

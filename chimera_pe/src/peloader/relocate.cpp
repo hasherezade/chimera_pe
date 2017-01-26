@@ -1,17 +1,7 @@
-#pragma once
-#include <Windows.h>
-#include "pe_hdrs_helper.h"
-#include "sysutil.h"
-
-#include <stdio.h>
+#include "relocate.h"
 
 #define RELOC_32BIT_FIELD 3
 #define RELOC_64BIT_FIELD 0xA
-
-typedef struct _BASE_RELOCATION_ENTRY {
-	WORD Offset : 12;
-	WORD Type : 4;
-} BASE_RELOCATION_ENTRY;
 
 bool has_relocations(BYTE *pe_buffer)
 {
@@ -86,7 +76,7 @@ bool apply_relocations(ULONGLONG newBase, ULONGLONG oldBase, PVOID modulePtr, SI
 			break;
 		}
 
-		printf("RelocBlock: %p %p\n", reloc->VirtualAddress, reloc->SizeOfBlock);
+		printf("RelocBlock: %x %x\n", reloc->VirtualAddress, reloc->SizeOfBlock);
 
 		size_t entriesNum = (reloc->SizeOfBlock - 2 * sizeof(DWORD)) / sizeof(WORD);
 		DWORD page = reloc->VirtualAddress;

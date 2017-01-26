@@ -1,42 +1,18 @@
 #pragma once
+#include <Windows.h>
+#include <stdio.h>
 
-bool get_default_browser(LPWSTR lpwOutPath, DWORD szOutPath)
-{
-    HKEY phkResult;
-    DWORD iMaxLen = szOutPath;
+//set of some sample injection targets:
+namespace target {
+    //get the path of default browser
+    bool get_default_browser(LPWSTR lpwOutPath, DWORD szOutPath);
 
-    LSTATUS res = RegOpenKeyEx(HKEY_CLASSES_ROOT, L"HTTP\\shell\\open\\command", 0, 1u, &phkResult);
-    if (res != ERROR_SUCCESS) {
-        printf("[ERROR] Failed with value = %x\n", res);
-        return false;
-    }
+    //get the path of system calc
+    bool get_calc_path(LPWSTR lpwOutPath, DWORD szOutPath);
 
-    res = RegQueryValueEx(phkResult, NULL, NULL, NULL, (LPBYTE) lpwOutPath, (LPDWORD) &iMaxLen);
-    if (res != ERROR_SUCCESS) {
-        printf("[ERROR] Failed with value = %x\n", res);
-        return false;
-    }
-    printf("%S\n", lpwOutPath);
-    return true;
-}
+    //get the path of svchost
+    bool get_svchost_path(LPWSTR lpwOutPath, DWORD szOutPath);
 
-bool get_calc_path(LPWSTR lpwOutPath, DWORD szOutPath)
-{
-    ExpandEnvironmentStrings(L"%SystemRoot%\\system32\\calc.exe", lpwOutPath, szOutPath);
-    printf("%S\n", lpwOutPath );
-    return true;
-}
-
-bool get_svchost_path(LPWSTR lpwOutPath, DWORD szOutPath)
-{
-    ExpandEnvironmentStrings(L"%SystemRoot%\\system32\\svchost.exe", lpwOutPath, szOutPath);
-    printf("%S\n", lpwOutPath );
-    return true;
-}
-
-bool get_explorer_path(LPWSTR lpwOutPath, DWORD szOutPath)
-{
-    ExpandEnvironmentStrings(L"%windir%\\explorer.exe", lpwOutPath, szOutPath);
-    printf("%S\n", lpwOutPath );
-    return true;
-}
+    //get the path of explorer exe
+    bool get_explorer_path(LPWSTR lpwOutPath, DWORD szOutPath);
+};

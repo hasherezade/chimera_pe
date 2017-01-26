@@ -1,20 +1,12 @@
-#pragma once
+#include "inject_pe.h"
 
-#include <windows.h>
-#include <stdio.h>
+#include "../ntdll_undoc.h"
 
-#include "ntdll_undoc.h"
-#include "createproc.h"
-
-#include "pe_raw_to_virtual.h"
-#include "relocate.h"
-#include "load_imports.h"
-
-bool run_injected_in_new_thread(HANDLE hProcess, LPVOID remote_shellcode_ptr)
+bool run_injected_in_new_thread(HANDLE hProcess, LPVOID remote_code_ep)
 {
     NTSTATUS status = NULL;
     //create a new thread for the injected code:
-    LPTHREAD_START_ROUTINE routine = (LPTHREAD_START_ROUTINE) remote_shellcode_ptr;
+    LPTHREAD_START_ROUTINE routine = (LPTHREAD_START_ROUTINE) remote_code_ep;
 
     DWORD threadId = NULL;
     HANDLE hMyThread = NULL;
@@ -28,12 +20,6 @@ bool run_injected_in_new_thread(HANDLE hProcess, LPVOID remote_shellcode_ptr)
     return true;
 }
 
-/*
-inject_PE32:
-    targetPath - application where we want to inject
-    payload - buffer with raw image of PE that we want to inject
-    payload_size - size of the above
-*/
 bool inject_PE(HANDLE hProcess, BYTE* payload, SIZE_T payload_size)
 {
     if (!load_ntdll_functions()) return false;

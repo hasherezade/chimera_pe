@@ -46,10 +46,18 @@ bool is_system32b()
         return false;
     }
 	//check if it is running under WoW
-    if (is_wow64()) {
+    return !is_wow64();
+}
+
+bool is_process_64b(HANDLE hProcess)
+{
+    if (is_system32b()) {
         return false;
     }
-    return true;
+    if (hProcess == NULL) {
+        hProcess = GetCurrentProcess();
+    }
+    return !is_wow64(hProcess);
 }
 
 bool validate_ptr(LPVOID buffer_bgn, SIZE_T buffer_size, LPVOID field_bgn, SIZE_T field_size)

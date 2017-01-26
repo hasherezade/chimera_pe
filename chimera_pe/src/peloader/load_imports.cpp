@@ -1,8 +1,4 @@
-#pragma once
-#include <Windows.h>
-#include <stdio.h>
-
-#include "pe_hdrs_helper.h"
+#include "load_imports.h"
 
 // warning! most of the libraries are loaded at different bases in different processes
 // that's why, we cannot solve their handles by this way

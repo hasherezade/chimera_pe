@@ -2,9 +2,9 @@
 #include <stdio.h>
 
 #include "resource.h"
-#include "inject_pe.h"
+#include "peloader/inject_pe.h"
 #include "target_util.h"
-#include "enumproc.h"
+#include "process_util.h"
 #include "sysutil.h"
 
 BYTE* get_raw_payload(OUT SIZE_T &res_size, int res_id)
@@ -29,7 +29,7 @@ BYTE* get_raw_payload(OUT SIZE_T &res_size, int res_id)
 HANDLE make_new_process(HANDLE &mainThread)
 {
     WCHAR targetPath[MAX_PATH];
-    if (!get_calc_path(targetPath, MAX_PATH)) {
+    if (!target::get_calc_path(targetPath, MAX_PATH)) {
         return NULL;
     }
     //create target process:
@@ -42,23 +42,10 @@ HANDLE make_new_process(HANDLE &mainThread)
     return pi.hProcess;
 }
 
-bool is_process_64b(HANDLE hProcess)
-{
-    if (is_system32b()) {
-        return false;
-    }
-    if (is_wow64(hProcess)) {
-        printf("[*] wow64\n");
-        return false;
-    }
-    printf("[*] not wow64\n");
-    return true;
-}
-
 int main(int argc, char *argv[])
 {
     //we may inject into existing process
-    HANDLE hProcess = find_running_process(L"calc.exe");
+    HANDLE hProcess = find_running_process2(L"calc.exe");
     HANDLE mainThread = NULL;
     if (!hProcess) {
         //or create a new one:
@@ -67,6 +54,11 @@ int main(int argc, char *argv[])
     }
 
     bool is64b = is_process_64b(hProcess);
+    if (is64b != is_process_64b()) {
+        printf("32/64b mismatch!\n");
+        system("pause");
+        return -1;
+    }
 
     BYTE* res_data = NULL;
     SIZE_T res_size = 0;
