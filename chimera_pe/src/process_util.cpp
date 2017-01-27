@@ -39,11 +39,11 @@ bool is_searched_process(DWORD processID, LPWSTR searchedName, bool is64b)
     WCHAR szProcessName[MAX_PATH];
     if (get_process_name(hProcess, szProcessName, MAX_PATH)) {
         wsctrtolower(szProcessName);
-        printf("%S  (PID: %u) : %d\n", szProcessName, processID, proc64b);
         if (wcsstr(szProcessName, searchedName) != NULL) {
             CloseHandle(hProcess);
             return true;
         }
+        printf("%S  (PID: %u) : %d\n", szProcessName, processID, proc64b);
     }
     CloseHandle(hProcess);
     return false;
@@ -51,8 +51,6 @@ bool is_searched_process(DWORD processID, LPWSTR searchedName, bool is64b)
 
 HANDLE find_running_process(LPWSTR searchedName)
 {
-    wsctrtolower(searchedName);
-
     bool is64b = !is_compiled_32b();
 
     HANDLE hProcessSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPALL, 0);
