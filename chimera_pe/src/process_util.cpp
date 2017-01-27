@@ -41,9 +41,9 @@ bool is_searched_process(DWORD processID, LPWSTR searchedName, bool is64b)
         wsctrtolower(szProcessName);
         if (wcsstr(szProcessName, searchedName) != NULL) {
             CloseHandle(hProcess);
+            printf("%S  (PID: %u) : %d\n", szProcessName, processID, proc64b);
             return true;
         }
-        printf("%S  (PID: %u) : %d\n", szProcessName, processID, proc64b);
     }
     CloseHandle(hProcess);
     return false;
