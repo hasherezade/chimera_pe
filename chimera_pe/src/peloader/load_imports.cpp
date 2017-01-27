@@ -1,14 +1,13 @@
 #include "load_imports.h"
 
-// warning! most of the libraries are loaded at different bases in different processes
-// that's why, we cannot solve their handles by this way
-// kernel32.dll and ntdll.dll are some of the exceptions - plus, they are loaded by every process
-// that's why it is safe to solve it by external loader
+// warning: it is recommended to solve only kernel32.dll and ntdll.dll by this way
+// - because they are loaded by every process (and at the same base)
+// rest of the imports should be filled by the payload (see: chimera_pe_payload_template)
 #define SUPPORTED_LIB_NAME "kernel32.dll"
 #define SUPPORTED_LIB_NAME2 "ntdll.dll"
 
-// user32.dll is also loaded at the same base, however, not every process will load it
-// if your payload needs it, and the target doesn't have it, it will crash!
+// user32.dll is loaded by most of the processes (but not all)
+// if your payload needs it, and the target doesn't have it, the application will crash!
 #define SUPPORTED_LIB_NAME3 "user32.dll"
 // if you want to include it add: 
 // #define TARGET_HAS_USER32
