@@ -10,21 +10,39 @@ bool get_process_name(IN HANDLE hProcess, OUT LPWSTR nameBuf, IN SIZE_T nameMax)
     return (out > 0);
 }
 
-WCHAR wchtolower(WCHAR in) {
-    if (in <= 'Z' && in >= 'A')
-        return in - ('Z' - 'z');
-    return in;
+inline WCHAR to_lowercase(WCHAR c1)
+{
+    if (c1 <= L'Z' && c1 >= L'A') {
+        c1 = (c1 - L'A') + L'a';
+    }
+    return c1;
 }
 
-size_t wsctrtolower(WCHAR* in) {
-    if (in == NULL) return 0;
+bool is_wanted_module(LPWSTR curr_name, LPWSTR wanted_name)
+{
+    if (wanted_name == NULL || curr_name == NULL) return false;
 
-    size_t i = 0;
-    while (in[i] != NULL) {
-        in[i] = wchtolower(in[i]);
-        i++;
+    WCHAR *curr_end_ptr = curr_name;
+    while (*curr_end_ptr != L'\0') {
+        curr_end_ptr++;
     }
-    return i;
+    if (curr_end_ptr == curr_name) return false;
+
+    WCHAR *wanted_end_ptr = wanted_name;
+    while (*wanted_end_ptr != L'\0') {
+        wanted_end_ptr++;
+    }
+    if (wanted_end_ptr == wanted_name) return false;
+
+    while ((curr_end_ptr != curr_name) && (wanted_end_ptr != wanted_name)) {
+
+        if (to_lowercase(*wanted_end_ptr) != to_lowercase(*curr_end_ptr)) {
+            return false;
+        }
+        wanted_end_ptr--;
+        curr_end_ptr--;
+    }
+    return true;
 }
 
 bool is_searched_process(DWORD processID, LPWSTR searchedName, bool is64b)
@@ -38,8 +56,7 @@ bool is_searched_process(DWORD processID, LPWSTR searchedName, bool is64b)
     }
     WCHAR szProcessName[MAX_PATH];
     if (get_process_name(hProcess, szProcessName, MAX_PATH)) {
-        wsctrtolower(szProcessName);
-        if (wcsstr(szProcessName, searchedName) != NULL) {
+        if (is_wanted_module(szProcessName, searchedName) != NULL) {
             CloseHandle(hProcess);
             printf("%S  (PID: %u) : %d\n", szProcessName, processID, proc64b);
             return true;
