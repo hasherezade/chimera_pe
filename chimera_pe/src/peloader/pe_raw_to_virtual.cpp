@@ -1,7 +1,7 @@
 #include "pe_raw_to_virtual.h"
 
 // Map raw PE into virtual memory of local process:
-bool sections_raw_to_virtual(BYTE* payload, SIZE_T destBufferSize, OUT BYTE* destAddress)
+bool sections_raw_to_virtual(BYTE* payload, SIZE_T destBufferSize, BYTE* destAddress)
 {
     if (payload == NULL) return false;
 
@@ -63,6 +63,25 @@ bool sections_raw_to_virtual(BYTE* payload, SIZE_T destBufferSize, OUT BYTE* des
         }
         printf("[+] %s to: %p\n", next_sec->Name, section_raw_ptr);
         memcpy(section_mapped, section_raw_ptr, sec_size);
+    }
+    return true;
+}
+
+bool update_image_base(BYTE* payload, PVOID destImageBase)
+{
+    bool is64b = is64bit(payload);
+    //update image base in the written content:
+    BYTE* payload_nt_hdr = get_nt_hrds(payload);
+    if (payload_nt_hdr == NULL) {
+        return false;
+    }
+    if (is64b) {
+        IMAGE_NT_HEADERS64* payload_nt_hdr64 = (IMAGE_NT_HEADERS64*)payload_nt_hdr;
+        payload_nt_hdr64->OptionalHeader.ImageBase = (ULONGLONG)destImageBase;
+    }
+    else {
+        IMAGE_NT_HEADERS32* payload_nt_hdr32 = (IMAGE_NT_HEADERS32*)payload_nt_hdr;
+        payload_nt_hdr32->OptionalHeader.ImageBase = (DWORD)destImageBase;
     }
     return true;
 }

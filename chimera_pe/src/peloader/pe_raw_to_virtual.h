@@ -7,4 +7,7 @@
 #include "../sysutil.h"
 
 // Map raw PE into virtual memory of local process:
-bool sections_raw_to_virtual(BYTE* payload, SIZE_T destBufferSize, OUT BYTE* destAddress);
+bool sections_raw_to_virtual(BYTE* payload, SIZE_T destBufferSize, BYTE* destAddress);
+
+//set a new image base in headers
+bool update_image_base(BYTE* payload, PVOID destImageBase);

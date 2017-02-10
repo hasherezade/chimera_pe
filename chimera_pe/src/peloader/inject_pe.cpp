@@ -55,14 +55,6 @@ bool inject_PE(HANDLE hProcess, BYTE* payload, SIZE_T payload_size)
         return false;
     }
     printf("Allocated remote ImageBase: %p size: %x\n", remoteAddress,  payloadImageSize);
-    if (is64) {
-        IMAGE_NT_HEADERS64* payload_nt_hdr = (IMAGE_NT_HEADERS64*)nt_hdr;
-        payload_nt_hdr->OptionalHeader.ImageBase = (ULONGLONG)remoteAddress;
-    }
-    else {
-        IMAGE_NT_HEADERS32* payload_nt_hdr = (IMAGE_NT_HEADERS32*)nt_hdr;
-        payload_nt_hdr->OptionalHeader.ImageBase = (DWORD)remoteAddress;
-    }
 
     //first we will prepare the payload image in the local memory, so that it will be easier to edit it, apply relocations etc.
     //when it will be ready, we will copy it into the space reserved in the target process
@@ -77,6 +69,12 @@ bool inject_PE(HANDLE hProcess, BYTE* payload, SIZE_T payload_size)
         printf("Could not copy PE file\n");
         return false;
     }
+
+    if (!update_image_base((BYTE*)localCopyAddress, remoteAddress)) {
+        printf("Could not update image base\n");
+        return false;
+    }
+
     printf("remoteAddress = %p\n", remoteAddress);
     //if the base address of the payload changed, we need to apply relocations:
     if ((ULONGLONG) remoteAddress != oldImageBase) {
