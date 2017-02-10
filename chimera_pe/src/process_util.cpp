@@ -118,7 +118,7 @@ HANDLE find_running_process2(LPWSTR searchedName)
     return NULL;
 }
 
-bool create_new_process1(IN LPWSTR path, OUT PROCESS_INFORMATION &pi)
+HANDLE create_new_process1(IN LPWSTR path, OUT PROCESS_INFORMATION &pi)
 {
     STARTUPINFO si;
     memset(&si, 0, sizeof(STARTUPINFO));
@@ -140,7 +140,7 @@ bool create_new_process1(IN LPWSTR path, OUT PROCESS_INFORMATION &pi)
         ))
     {
         printf("[ERROR] CreateProcess failed, Error = %x\n", GetLastError());
-        return false;
+        return NULL;
     }
-    return true;
+    return pi.hProcess;
 }

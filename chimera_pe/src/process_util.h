@@ -18,4 +18,4 @@ HANDLE find_running_process(LPWSTR searchedName);
 HANDLE find_running_process2(LPWSTR searchedName);
 
 //create new process
-bool create_new_process1(IN LPWSTR path, OUT PROCESS_INFORMATION &pi);
+HANDLE create_new_process1(IN LPWSTR path, OUT PROCESS_INFORMATION &pi);
