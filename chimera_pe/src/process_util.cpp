@@ -118,7 +118,7 @@ HANDLE find_running_process2(LPWSTR searchedName)
     return NULL;
 }
 
-HANDLE create_new_process1(IN LPWSTR path, OUT PROCESS_INFORMATION &pi)
+HANDLE create_new_process1(IN LPWSTR path, OUT PROCESS_INFORMATION &pi, BOOL run_original)
 {
     STARTUPINFO si;
     memset(&si, 0, sizeof(STARTUPINFO));
@@ -126,13 +126,18 @@ HANDLE create_new_process1(IN LPWSTR path, OUT PROCESS_INFORMATION &pi)
 
     memset(&pi, 0, sizeof(PROCESS_INFORMATION));
 
-    if (!CreateProcess(
+    DWORD flags = DETACHED_PROCESS;
+    if (run_original == FALSE) {
+        flags |= CREATE_SUSPENDED;
+    }
+
+    if (!CreateProcessW(
             NULL,
             path,
             NULL, //lpProcessAttributes
             NULL, //lpThreadAttributes
             FALSE, //bInheritHandles
-            CREATE_SUSPENDED, //dwCreationFlags
+            flags, //dwCreationFlags
             NULL, //lpEnvironment 
             NULL, //lpCurrentDirectory
             &si, //lpStartupInfo
@@ -142,5 +147,6 @@ HANDLE create_new_process1(IN LPWSTR path, OUT PROCESS_INFORMATION &pi)
         printf("[ERROR] CreateProcess failed, Error = %x\n", GetLastError());
         return NULL;
     }
+
     return pi.hProcess;
 }
