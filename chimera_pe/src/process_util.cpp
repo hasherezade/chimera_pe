@@ -3,7 +3,7 @@
 bool get_process_name(IN HANDLE hProcess, OUT LPWSTR nameBuf, IN SIZE_T nameMax)
 {
     memset(nameBuf, 0, nameMax);
-    DWORD out = GetModuleBaseName(hProcess, 0, nameBuf, nameMax);
+    SIZE_T out = GetModuleBaseName(hProcess, 0, nameBuf, nameMax);
     if (out == 0) {
         out = GetProcessImageFileName(hProcess, nameBuf, nameMax);
     }

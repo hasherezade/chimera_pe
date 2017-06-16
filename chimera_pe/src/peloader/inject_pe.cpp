@@ -20,18 +20,17 @@ bool run_injected_in_new_thread(HANDLE hProcess, LPVOID remote_code_ep)
     return true;
 }
 
-bool paste_to_remote(HANDLE hProcess, LPVOID reservedAddress, LPVOID localCopyAddress, size_t payloadImageSize)
+bool paste_to_remote(HANDLE hProcess, LPVOID reservedAddress, LPVOID localCopyAddress, size_t payloadImageSize, BOOL all_in_one = false)
 {
     size_t sec_number = get_sec_number((BYTE*) localCopyAddress);
     LPVOID secptr = get_sec_ptr((BYTE*) localCopyAddress);
-    BOOL all_in_one = false;
+    SIZE_T written = 0;
 
     if (sec_number == 0 || secptr == NULL || all_in_one) {
         // the payload has no sections - this should not happen if you are injecting PE file
         LPVOID remoteAddress = VirtualAllocEx(hProcess, reservedAddress , payloadImageSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
         if (remoteAddress == NULL) return false;
-
-        DWORD written = 0;
+        
         if (!WriteProcessMemory(hProcess, remoteAddress, localCopyAddress, payloadImageSize, &written) || written != payloadImageSize) {
             printf("[ERROR] Could not paste the image into remote process!\n");
             return false;
@@ -42,9 +41,8 @@ bool paste_to_remote(HANDLE hProcess, LPVOID reservedAddress, LPVOID localCopyAd
     LPVOID startAddress = reservedAddress;
     PIMAGE_SECTION_HEADER next_sec = (PIMAGE_SECTION_HEADER)(secptr);
 
-    DWORD written = 0;
     DWORD old_protect = 0;
-    DWORD v_size = get_hdrs_size((BYTE*) localCopyAddress);
+    SIZE_T v_size = get_hdrs_size((BYTE*) localCopyAddress);
 
     //copy headers:
     LPVOID remoteAddress = VirtualAllocEx(hProcess, startAddress, v_size, MEM_COMMIT, PAGE_READWRITE);
@@ -115,8 +113,8 @@ bool inject_PE(HANDLE hProcess, BYTE* payload, SIZE_T payload_size)
         payloadImageSize = payload_nt_hdr->OptionalHeader.SizeOfImage;
         entryPoint = payload_nt_hdr->OptionalHeader.AddressOfEntryPoint;
     }
-    SIZE_T written = 0;
 
+    SIZE_T written = 0;
     LPVOID remoteAddress = VirtualAllocEx(hProcess, NULL, payloadImageSize, MEM_RESERVE, PAGE_READWRITE);
     if (remoteAddress == NULL)  {
         printf("Could not allocate memory in the remote process\n");
