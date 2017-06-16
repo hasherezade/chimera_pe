@@ -73,3 +73,33 @@ IMAGE_DATA_DIRECTORY* get_pe_directory(PVOID pe_buffer, DWORD dir_id)
 	}
 	return peDir;
 }
+
+DWORD translate_protect(DWORD sec_charact)
+{
+    if ((sec_charact & IMAGE_SCN_MEM_EXECUTE) 
+        && (sec_charact & IMAGE_SCN_MEM_READ)
+        && (sec_charact & IMAGE_SCN_MEM_WRITE))
+    {
+        return PAGE_EXECUTE_READWRITE;
+    }
+    if ((sec_charact & IMAGE_SCN_MEM_EXECUTE) 
+        && (sec_charact & IMAGE_SCN_MEM_READ))
+    {
+        return PAGE_EXECUTE_READ;
+    }
+    if (sec_charact & IMAGE_SCN_MEM_EXECUTE)
+    {
+        return PAGE_EXECUTE_READ;
+    }
+
+    if ((sec_charact & IMAGE_SCN_MEM_READ)
+        && (sec_charact & IMAGE_SCN_MEM_WRITE))
+    {
+        return PAGE_READWRITE;
+    }
+    if (sec_charact &  IMAGE_SCN_MEM_READ) {
+        return PAGE_READONLY;
+    }
+
+    return PAGE_READWRITE;
+}

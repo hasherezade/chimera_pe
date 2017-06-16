@@ -19,7 +19,7 @@ BYTE* get_raw_payload(OUT SIZE_T &res_size, int res_id)
     BYTE* res_data = (BYTE*) LockResource(res_handle);
     res_size = SizeofResource(NULL, res);
 
-    BYTE* out_buf = (BYTE*) VirtualAlloc(NULL,res_size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    BYTE* out_buf = (BYTE*) VirtualAlloc(NULL, res_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
     memcpy(out_buf, res_data, res_size);
 
     FreeResource(res_handle);

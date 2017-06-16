@@ -1,5 +1,84 @@
 #include "pe_raw_to_virtual.h"
 
+LPVOID get_sec_ptr(BYTE* payload)
+{
+    if (payload == NULL) return NULL;
+
+    bool is64b = is64bit(payload);
+
+    BYTE* payload_nt_hdr = get_nt_hrds(payload);
+    if (payload_nt_hdr == NULL) {
+        printf("Invalid payload: %p\n", payload);
+        return NULL;
+    }
+
+    IMAGE_FILE_HEADER *fileHdr = NULL;
+    LPVOID secptr = NULL;
+    if (is64b) {
+        IMAGE_NT_HEADERS64* payload_nt_hdr64 = (IMAGE_NT_HEADERS64*)payload_nt_hdr;
+        fileHdr = &(payload_nt_hdr64->FileHeader);
+        secptr = (LPVOID)((ULONGLONG)&(payload_nt_hdr64->OptionalHeader) + fileHdr->SizeOfOptionalHeader);
+    }
+    else {
+        IMAGE_NT_HEADERS32* payload_nt_hdr32 = (IMAGE_NT_HEADERS32*)payload_nt_hdr;
+        fileHdr = &(payload_nt_hdr32->FileHeader);
+        secptr = (LPVOID)((ULONGLONG)&(payload_nt_hdr32->OptionalHeader) + fileHdr->SizeOfOptionalHeader);
+    }
+    return secptr;
+}
+
+WORD get_sec_number(BYTE* payload)
+{
+    if (payload == NULL) return 0;
+
+    bool is64b = is64bit(payload);
+
+    BYTE* payload_nt_hdr = get_nt_hrds(payload);
+    if (payload_nt_hdr == NULL) {
+        printf("Invalid payload: %p\n", payload);
+        return 0;
+    }
+
+    IMAGE_FILE_HEADER *fileHdr = NULL;
+    LPVOID secptr = NULL;
+    if (is64b) {
+        IMAGE_NT_HEADERS64* payload_nt_hdr64 = (IMAGE_NT_HEADERS64*)payload_nt_hdr;
+        fileHdr = &(payload_nt_hdr64->FileHeader);
+    }
+    else {
+        IMAGE_NT_HEADERS32* payload_nt_hdr32 = (IMAGE_NT_HEADERS32*)payload_nt_hdr;
+        fileHdr = &(payload_nt_hdr32->FileHeader);
+    }
+    return fileHdr->NumberOfSections;
+}
+
+DWORD get_hdrs_size(BYTE* payload)
+{
+    if (payload == NULL) return false;
+
+    bool is64b = is64bit(payload);
+
+    BYTE* payload_nt_hdr = get_nt_hrds(payload);
+    if (payload_nt_hdr == NULL) {
+        printf("Invalid payload: %p\n", payload);
+        return false;
+    }
+
+    IMAGE_FILE_HEADER *fileHdr = NULL;
+    DWORD hdrsSize = 0;
+    if (is64b) {
+        IMAGE_NT_HEADERS64* payload_nt_hdr64 = (IMAGE_NT_HEADERS64*)payload_nt_hdr;
+        fileHdr = &(payload_nt_hdr64->FileHeader);
+        hdrsSize = payload_nt_hdr64->OptionalHeader.SizeOfHeaders;
+    }
+    else {
+        IMAGE_NT_HEADERS32* payload_nt_hdr32 = (IMAGE_NT_HEADERS32*)payload_nt_hdr;
+        fileHdr = &(payload_nt_hdr32->FileHeader);
+        hdrsSize = payload_nt_hdr32->OptionalHeader.SizeOfHeaders;
+    }
+    return hdrsSize;
+}
+
 // Map raw PE into virtual memory of local process:
 bool sections_raw_to_virtual(BYTE* payload, SIZE_T destBufferSize, BYTE* destAddress)
 {
