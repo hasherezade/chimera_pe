@@ -77,21 +77,17 @@ HANDLE find_running_process(LPWSTR searchedName)
     if (!Process32First(hProcessSnapShot, &process_entry)) {
         return NULL;
     }
-
     do
     {
-        if (is_searched_process(process_entry.th32ProcessID, searchedName, is64b)) {
-            HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, process_entry.th32ProcessID);
-            return hProcess;
+        if (is_wanted_module(process_entry.szExeFile, searchedName) != NULL) {
+            return OpenProcess(PROCESS_ALL_ACCESS, FALSE, process_entry.th32ProcessID);
         }
-
     } while (Process32Next(hProcessSnapShot, &process_entry));
 
     // Close the handle
     CloseHandle(hProcessSnapShot);
     return NULL;
 }
-
 
 HANDLE find_running_process2(LPWSTR searchedName)
 {
