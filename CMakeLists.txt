@@ -11,5 +11,5 @@ set (PAYLOAD_DIR "${CMAKE_SOURCE_DIR}/${M_PAYLOAD}" CACHE PATH "Payload template
 
 # Add sub-directories
 #
-add_subdirectory( ${M_LOADER}/src )
-add_subdirectory( ${M_PAYLOAD}/src )
+add_subdirectory( ${M_LOADER} )
+add_subdirectory( ${M_PAYLOAD} )
