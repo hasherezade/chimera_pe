@@ -13,8 +13,6 @@ branches:
 install:
   - cinst cmake
   - set PATH=C:\Program Files\CMake\bin;%PATH%
-  - git init
-  - git submodule update --init --recursive
 
 build:
   verbosity: detailed
